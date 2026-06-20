@@ -4,7 +4,7 @@
 // ثم تشغيل خادم HTTP والاستماع للطلبات
 // ==============================================
 
-const config = require('./src/config/config');
+const config = require('./config');
 const connectDatabase = require('./src/config/database');
 const app = require('./src/app');
 
