@@ -1,7 +1,7 @@
 # 🎮 Team Challenge Backend
 ### Backend احترافي للعبة تحديات بين فريقين (Quiz / Trivia Game)
 
-> **حالة المشروع**: المرحلة 2 من 9 — نماذج قاعدة البيانات ✅
+> **حالة المشروع**: تم تفعيل المصادقة + الفئات + الأسئلة + متجر الألعاب + الشراء + التحليلات الإدارية ✅
 
 ---
 
@@ -34,24 +34,25 @@ team-challenge-backend/
     │   └── database.js         ← الاتصال بـ MongoDB
     │
     ├── models/                 ← مخططات Mongoose (Schemas) — تعريف شكل البيانات
-    │                              [سيُملأ في المرحلة 2: Users, Categories, Questions, GameSession]
+    │                              Users, Categories, Questions, GameSession, Game, Purchase, Visitor
     │
     ├── controllers/            ← منطق العمل (Business Logic) لكل طلب
-    │                              مثال: ماذا يحدث فعلياً عند /auth/login
+    │                              auth, category, question, game, purchase, admin
     │
     ├── routes/                 ← تعريف المسارات (Endpoints) وربطها بالـ controllers فقط
     │                              لا يوجد منطق هنا، فقط توجيه (Routing)
     │
     ├── middleware/              ← دوال تعمل "بين" الطلب والرد
-    │   └── errorMiddleware.js  ← معالجة الأخطاء الموحّدة (موجود الآن)
-    │                              [لاحقاً: التحقق من JWT، الصلاحيات، Rate Limiting]
+    │   ├── errorMiddleware.js  ← معالجة الأخطاء الموحّدة
+    │   ├── authMiddleware.js   ← protect (JWT) + adminOnly (صلاحيات)
+    │   └── visitorMiddleware.js ← تتبع الزوار (Fire-and-forget، بدون تأثير على الأداء)
     │
-    ├── services/                ← منطق معقد مُعاد استخدامه (مثل التواصل مع Stripe)
+    ├── services/                ← منطق معقد مُعاد استخدامه (مثل التواصل مع Stripe لاحقاً)
     │                              يُفصل عن الـ controllers لإبقائها نظيفة وقابلة للاختبار
     │
-    ├── seeders/                  ← سكربتات لحقن بيانات تجريبية في قاعدة البيانات
+    ├── seeders/                  ← سكربتات لحقن بيانات تجريبية في قاعدة البيانات (لاحقاً)
     │
-    └── utils/                    ← دوال مساعدة عامة (مثل توليد JWT، اختيار سؤال عشوائي)
+    └── utils/                    ← asyncHandler.js (تغليف async/await) + generateToken.js (JWT)
 ```
 
 ### لماذا هذا الفصل؟ (Routes → Controllers → Models)
@@ -118,14 +119,32 @@ GET http://localhost:5000/api/health
 ## 4️⃣ خطة المراحل القادمة
 
 - [x] **المرحلة 1**: الهيكلة، الإعدادات، الاتصال بقاعدة البيانات ✅
-- [x] **المرحلة 2**: نماذج قاعدة البيانات (Users, Categories, Questions, GameSession) ✅ (تمت الآن)
-- [ ] **المرحلة 3**: نظام المصادقة (Signup/Login/JWT/الصلاحيات)
-- [ ] **المرحلة 4**: APIs الفئات والأسئلة
+- [x] **المرحلة 2**: نماذج قاعدة البيانات (Users, Categories, Questions, GameSession) ✅
+- [x] **المرحلة 3**: نظام المصادقة (Signup/Login/JWT/الصلاحيات) ✅
+- [x] **المرحلة 4**: APIs الفئات والأسئلة ✅
 - [ ] **المرحلة 5**: منطق اللعبة الكامل (بدء/إجابة/نقاط/أدوار/فائز/إعادة ضبط)
-- [ ] **المرحلة 6**: نظام الدفع (Stripe)
-- [ ] **المرحلة 7**: الأمان المتقدم (Validation، Rate Limiting، منع الغش)
+- [ ] **المرحلة 6**: نظام الدفع الحقيقي (Stripe webhooks)
+- [ ] **المرحلة 7**: الأمان المتقدم (Validation شامل، منع الغش)
 - [ ] **المرحلة 8**: بيانات تجريبية (Seed Data)
 - [ ] **المرحلة 9**: التوثيق النهائي وجاهزية النشر
+
+### 🆕 أُضيف في هذه الدفعة (متجر الألعاب + التحليلات الإدارية)
+
+| الميزة | Endpoints |
+|---|---|
+| **مصادقة** | `POST /api/auth/register` · `POST /api/auth/login` · `GET /api/auth/me` |
+| **فئات** | `POST /api/categories` (admin) · `GET /api/categories` · `GET /api/categories/:id` |
+| **أسئلة داخل فئة** | `POST /api/categories/:categoryId/questions` (admin) · `GET /api/categories/:categoryId/questions` (مرتبة حسب difficultyScore) |
+| **ألعاب** | `POST /api/games` (admin) · `GET /api/games` · `GET /api/games/:id` · `GET /api/games/:id/play` (يتحقق من الشراء) |
+| **شراء** | `POST /api/games/purchase` · `GET /api/users/my-games` |
+| **تحليلات إدارية** | `GET /api/admin/stats` (admin) — مستخدمين، زوار، توزيع دول، أرباح |
+
+كل المسارات المحمية تتطلب رأس `Authorization: Bearer <token>` (يُستخرج التوكن من `/api/auth/login` أو `/api/auth/register`). مسارات `admin` تتطلب أن يكون `role = 'admin'` على حساب المستخدم (يمكن تعديله مباشرة في قاعدة البيانات لأول حساب، لا يوجد حالياً endpoint لترقية الصلاحيات تلقائياً).
+
+تتبع الزوار (Visitor tracking) يعمل تلقائياً على كل طلب عبر middleware غير متزامن (Fire-and-forget) — لا حاجة لاستدعائه يدوياً، ولا يؤثر على زمن استجابة أي endpoint. الدولة تُستخرج محلياً عبر حزمة `geoip-lite` (قاعدة بيانات مضمّنة، بدون أي اتصال شبكي خارجي).
+
+**ملاحظة مهمة**: حزمة `geoip-lite` جديدة في `package.json` — نفّذ `npm install` بعد سحب هذا التحديث قبل التشغيل.
+
 
 ---
 

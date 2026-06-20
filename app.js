@@ -12,8 +12,9 @@ const helmet = require('helmet');
 const morgan = require('morgan');
 const compression = require('compression');
 
-const config = require('./config');
-const { notFound, errorHandler } = require('./errorMiddleware');
+const config = require('./config/config');
+const { notFound, errorHandler } = require('./middleware/errorMiddleware');
+const trackVisitor = require('./middleware/visitorMiddleware');
 
 // إنشاء تطبيق Express
 const app = express();
@@ -43,6 +44,9 @@ if (config.env === 'development') {
 app.use(express.json({ limit: '10kb' }));
 app.use(express.urlencoded({ extended: true, limit: '10kb' }));
 
+// تتبع الزوار (Analytics) - بدون أي تأثير على الأداء (Fire-and-forget، انظر visitorMiddleware.js)
+app.use(trackVisitor);
+
 // ----- مسار فحص صحة الخادم (Health Check) -----
 // مفيد جداً عند النشر (Render/Vercel/VPS) للتأكد أن الخادم يعمل
 app.get('/api/health', (req, res) => {
@@ -54,12 +58,15 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// ----- ربط الـ Routes (سيتم تفعيلها تباعاً في المراحل القادمة) -----
+// ----- ربط الـ Routes -----
+app.use('/api/auth', require('./routes/authRoutes'));
+app.use('/api/categories', require('./routes/categoryRoutes'));
+// أسئلة كل فئة متداخلة تحت الفئة نفسها: /api/categories/:categoryId/questions
+app.use('/api/categories/:categoryId/questions', require('./routes/questionRoutes'));
+app.use('/api/games', require('./routes/gameRoutes'));
+app.use('/api/users', require('./routes/userRoutes'));
+app.use('/api/admin', require('./routes/adminRoutes'));
 // مثال لما سنضيفه لاحقاً:
-// app.use('/api/auth', require('./routes/authRoutes'));
-// app.use('/api/categories', require('./routes/categoryRoutes'));
-// app.use('/api/questions', require('./routes/questionRoutes'));
-// app.use('/api/game', require('./routes/gameRoutes'));
 // app.use('/api/payment', require('./routes/paymentRoutes'));
 
 // ----- معالجة الأخطاء (يجب أن تبقى دائماً في آخر الملف) -----
