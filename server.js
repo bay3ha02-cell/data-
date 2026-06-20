@@ -27,14 +27,18 @@ app.get('/health', (req, res) => {
   res.status(200).json({ status: 'ok' });
 });
   // الخطوة 2: تشغيل خادم HTTP بعد التأكد من جاهزية قاعدة البيانات
-  const server = app.listen(config.port, () => {
+  const server = app.listen(, () => {
     console.log('==========================================');
-    console.log(`🚀 الخادم يعمل الآن على المنفذ: ${config.port}`);
+    console.log(`🚀 الخادم يعمل الآن على المنفذ: ${}`);
     console.log(`🌍 بيئة التشغيل: ${config.env}`);
-    console.log(`🔗 رابط فحص الصحة: http://localhost:${config.port}/api/health`);
+    console.log(`🔗 رابط فحص الصحة: http://localhost:${}/api/health`);
     console.log('==========================================');
   });
+const PORT = process.env.PORT || 3000;
 
+app.listen(PORT, () => {
+  console.log("🚀 الخادم يعمل الآن على المنفذ:", PORT);
+});
   // التقاط الأخطاء غير المتوقعة في الكود غير المتزامن (Promises)
   // مثال: فشل اتصال خارجي (Stripe, MongoDB) دون معالجة
   process.on('unhandledRejection', (error) => {
