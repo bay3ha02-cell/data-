@@ -13,7 +13,7 @@ const morgan = require('morgan');
 const compression = require('compression');
 
 const config = require('./config');
-const { notFound, errorHandler } = require('./middleware/errorMiddleware');
+const { notFound, errorHandler } = require('./errorMiddleware');
 const trackVisitor = require('./middleware/visitorMiddleware');
 
 // إنشاء تطبيق Express
