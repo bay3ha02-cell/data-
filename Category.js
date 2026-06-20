@@ -25,6 +25,12 @@ const categorySchema = new mongoose.Schema(
       type: String, // رابط صورة أو اسم أيقونة تُعرض في الواجهة الأمامية
       default: '',
     },
+    // صورة الغلاف الرئيسية للفئة (مطلوبة لعرض بطاقات الفئات في الواجهة الأمامية)
+    // منفصلة عن icon: icon لأيقونة صغيرة، coverImage لصورة غلاف كاملة
+    coverImage: {
+      type: String,
+      default: '',
+    },
     // إذا كانت true، يجب أن يكون المستخدم مشتركاً (isSubscribed = true) ليتمكن من اللعب بها
     isPremium: {
       type: Boolean,

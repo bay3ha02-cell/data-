@@ -39,6 +39,22 @@ const questionSchema = new mongoose.Schema(
       enum: ['easy', 'medium', 'hard'], // سهل | متوسط | صعب
       default: 'medium',
     },
+    // مستوى صعوبة رقمي (200 إلى 800) بنمط ألعاب الأسئلة الكلاسيكية (Jeopardy-style)
+    // يُستخدم لترتيب الأسئلة داخل الفئة وعرضها بشكل تصاعدي من الأسهل للأصعب
+    // منفصل عن حقل difficulty النصي القديم حتى لا نكسر أي منطق يعتمد عليه حالياً
+    difficultyScore: {
+      type: Number,
+      min: [200, 'قوة السؤال يجب ألا تقل عن 200'],
+      max: [800, 'قوة السؤال يجب ألا تزيد عن 800'],
+      default: 200,
+    },
+    // إجابة مساعدة (Hint) تُعرض للاعب عند الحاجة لمساعدة دون كشف الإجابة الصحيحة مباشرة
+    hintAnswer: {
+      type: String,
+      trim: true,
+      maxlength: [300, 'الإجابة المساعدة طويلة جداً'],
+      default: '',
+    },
     // نقاط السؤال - تُمنح للفريق عند الإجابة الصحيحة (تُربط عادة بمستوى الصعوبة)
     points: {
       type: Number,
@@ -62,6 +78,8 @@ const questionSchema = new mongoose.Schema(
 // فهرس مركّب (Compound Index) يسرّع كثيراً استعلام "أسئلة فعّالة من فئة معينة"
 // وهو الاستعلام الأكثر تكراراً في منطق اللعبة (اختيار سؤال عشوائي أثناء اللعب)
 questionSchema.index({ category: 1, isActive: 1 });
+// فهرس مركّب يسرّع جلب أسئلة فئة معينة مرتبة حسب قوة السؤال (difficultyScore)
+questionSchema.index({ category: 1, difficultyScore: 1 });
 
 // تحقق إضافي قبل الحفظ: سؤال الاختيار من متعدد يجب أن يحتوي خيارين على الأقل
 questionSchema.pre('validate', function (next) {
