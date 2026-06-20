@@ -14,7 +14,7 @@ const compression = require('compression');
 
 const config = require('./config');
 const { notFound, errorHandler } = require('./errorMiddleware');
-const trackVisitor = require('./middleware/visitorMiddleware')
+const trackVisitor = require('./middleware');
 
 // إنشاء تطبيق Express
 const app = express();
