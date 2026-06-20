@@ -5,7 +5,7 @@
 // ==============================================
 
 const jwt = require('jsonwebtoken');
-const config = require('../config/config');
+const config = require('./config')
 
 const generateToken = (user) => {
   return jwt.sign(
