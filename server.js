@@ -6,7 +6,7 @@
 
 const config = require('./config');
 const connectDatabase = require('./database');
-const app = require('./src/app');
+const app = require('./app');
 
 // التقاط الأخطاء غير المتوقعة في الكود المتزامن (Synchronous) قبل أي شيء آخر
 // مثال: استخدام متغير غير معرّف بالخطأ
