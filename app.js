@@ -12,7 +12,7 @@ const helmet = require('helmet');
 const morgan = require('morgan');
 const compression = require('compression');
 
-const config = require('./config/config');
+const config = require('./config')
 const { notFound, errorHandler } = require('./middleware/errorMiddleware');
 const trackVisitor = require('./middleware/visitorMiddleware');
 
