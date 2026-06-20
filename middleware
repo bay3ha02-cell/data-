@@ -8,7 +8,7 @@
 
 const geoip = require('geoip-lite');
 const jwt = require('jsonwebtoken');
-const config = require('../config');
+const config = require('./config');
 const { Visitor } = require('../models');
 
 // Ù„Ø§ Ø¯Ø§Ø¹ÙŠ Ù„ØªØ³Ø¬ÙŠÙ„ Ø·Ù„Ø¨Ø§Øª OPTIONS (CORS preflight) Ù„Ø£Ù†Ù‡Ø§ Ù„ÙŠØ³Øª Ø²ÙŠØ§Ø±Ø§Øª Ø­Ù‚ÙŠÙ‚ÙŠØ©
