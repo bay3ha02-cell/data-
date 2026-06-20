@@ -4,9 +4,9 @@
 // ثم تشغيل خادم HTTP والاستماع للطلبات
 // ==============================================
 
-const config = require('./src/config/config');
-const connectDatabase = require('./src/config/database');
-const app = require('./src/app');
+const config = require('./config');
+const connectDatabase = require('./database');
+const app = require('./app');
 
 // التقاط الأخطاء غير المتوقعة في الكود المتزامن (Synchronous) قبل أي شيء آخر
 // مثال: استخدام متغير غير معرّف بالخطأ
