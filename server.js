@@ -23,7 +23,9 @@ process.on('uncaughtException', (error) => {
 const startServer = async () => {
   // الخطوة 1: الاتصال بقاعدة البيانات أولاً
   await connectDatabase();
-
+app.get('/health', (req, res) => {
+  res.status(200).json({ status: 'ok' });
+});
   // الخطوة 2: تشغيل خادم HTTP بعد التأكد من جاهزية قاعدة البيانات
   const server = app.listen(config.port, () => {
     console.log('==========================================');
