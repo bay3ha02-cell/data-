@@ -1,0 +1,61 @@
+// ==============================================
+// Middleware ØªØªØ¨Ø¹ Ø§Ù„Ø²ÙˆØ§Ø± (Visitor Tracking)
+// ÙŠØ³Ø¬Ù‘Ù„ ÙƒÙ„ Ø·Ù„Ø¨ ÙˆØ§Ø±Ø¯ Ù„Ø£ØºØ±Ø§Ø¶ Ø§Ù„ØªØ­Ù„ÙŠÙ„Ø§Øª Ø§Ù„Ø¥Ø¯Ø§Ø±ÙŠØ© (/api/admin/stats)
+// Ù…Ù‡Ù… Ø¬Ø¯Ø§Ù‹: Ù„Ø§ ÙŠÙØ³ØªØ®Ø¯Ù… await Ø¹Ù„Ù‰ Ø¹Ù…Ù„ÙŠØ© Ø§Ù„Ø­ÙØ¸ ÙÙŠ Ù‚Ø§Ø¹Ø¯Ø© Ø§Ù„Ø¨ÙŠØ§Ù†Ø§Øª
+// Ø­ØªÙ‰ Ù„Ø§ ÙŠØ¨Ø·Ø¦ Ø§Ù„Ø±Ø¯ Ø¹Ù„Ù‰ Ø§Ù„Ù…Ø³ØªØ®Ø¯Ù… Ø¨Ø£ÙŠ Ø´ÙƒÙ„ (Fire-and-forget)
+// Ø£ÙŠ Ø®Ø·Ø£ ÙÙŠ Ø§Ù„ØªØªØ¨Ø¹ ÙŠÙØ³Ø¬ÙŽÙ‘Ù„ ÙÙŠ Ø§Ù„Ù€ console ÙÙ‚Ø· ÙˆÙ„Ø§ ÙŠÙˆÙ‚Ù Ø§Ù„Ø·Ù„Ø¨ Ø£Ø¨Ø¯Ø§Ù‹
+// ==============================================
+
+const geoip = require('geoip-lite');
+const jwt = require('jsonwebtoken');
+const config = require('../config/config');
+const { Visitor } = require('../models');
+
+// Ù„Ø§ Ø¯Ø§Ø¹ÙŠ Ù„ØªØ³Ø¬ÙŠÙ„ Ø·Ù„Ø¨Ø§Øª OPTIONS (CORS preflight) Ù„Ø£Ù†Ù‡Ø§ Ù„ÙŠØ³Øª Ø²ÙŠØ§Ø±Ø§Øª Ø­Ù‚ÙŠÙ‚ÙŠØ©
+const trackVisitor = (req, res, next) => {
+  if (req.method !== 'OPTIONS') {
+    // Ù†ÙÙƒÙ…Ù„ ØªÙ†ÙÙŠØ° Ø§Ù„ØªØªØ¨Ø¹ ÙÙŠ Ø§Ù„Ø®Ù„ÙÙŠØ© Ø¯ÙˆÙ† Ø§Ù†ØªØ¸Ø§Ø±Ù‡ Ø¥Ø·Ù„Ø§Ù‚Ø§Ù‹
+    setImmediate(() => {
+      try {
+        // Ø§Ø³ØªØ®Ø±Ø§Ø¬ IP Ø§Ù„Ø­Ù‚ÙŠÙ‚ÙŠ Ø­ØªÙ‰ Ø®Ù„Ù Proxy/Load Balancer (Ù…Ø«Ù„ Render)
+        const ip =
+          (req.headers['x-forwarded-for'] || '').split(',')[0].trim() ||
+          req.socket?.remoteAddress ||
+          'unknown';
+
+        // GeoIP Ù…Ø­Ù„ÙŠ Ø¨Ø§Ù„ÙƒØ§Ù…Ù„ (Ù‚Ø§Ø¹Ø¯Ø© Ø¨ÙŠØ§Ù†Ø§Øª Ù…Ø¶Ù…Ù‘Ù†Ø© ÙÙŠ Ø§Ù„Ø­Ø²Ù…Ø©) - Ø¨Ø¯ÙˆÙ† Ø£ÙŠ Ø·Ù„Ø¨ Ø´Ø¨ÙƒÙŠ Ø®Ø§Ø±Ø¬ÙŠ
+        const geo = geoip.lookup(ip);
+        const country = geo?.country || 'Unknown';
+
+        // Ù…Ø­Ø§ÙˆÙ„Ø© Ø§Ø³ØªØ®Ø±Ø§Ø¬ Ø§Ù„Ù…Ø³ØªØ®Ø¯Ù… Ø¥Ù† ÙˆÙØ¬Ø¯ ØªÙˆÙƒÙ† ØµØ§Ù„Ø­ØŒ Ø¨Ø¯ÙˆÙ† ÙØ±Ø¶ Ø§Ù„Ù…ØµØ§Ø¯Ù‚Ø© (best-effort ÙÙ‚Ø·)
+        let userId = null;
+        const authHeader = req.headers.authorization;
+        if (authHeader && authHeader.startsWith('Bearer ')) {
+          try {
+            const decoded = jwt.verify(authHeader.split(' ')[1], config.jwtSecret);
+            userId = decoded.id;
+          } catch (_) {
+            // ØªÙˆÙƒÙ† ØºÙŠØ± ØµØ§Ù„Ø­ Ø£Ø«Ù†Ø§Ø¡ Ø§Ù„ØªØªØ¨Ø¹ ÙÙ‚Ø· - Ù†ØªØ¬Ø§Ù‡Ù„Ù‡ Ø¨ØµÙ…ØªØŒ Ù‡Ø°Ø§ Ù„ÙŠØ³ Ù…ÙƒØ§Ù† ÙØ±Ø¶ Ø§Ù„Ù…ØµØ§Ø¯Ù‚Ø©
+          }
+        }
+
+        Visitor.create({
+          ip,
+          country,
+          path: req.originalUrl,
+          method: req.method,
+          userAgent: req.headers['user-agent'] || '',
+          user: userId,
+        }).catch((error) => {
+          console.error('âš ï¸ ÙØ´Ù„ ØªØ³Ø¬ÙŠÙ„ Ø²ÙŠØ§Ø±Ø© (Ù„Ù† ÙŠØ¤Ø«Ø± Ø¹Ù„Ù‰ Ø§Ù„Ø·Ù„Ø¨):', error.message);
+        });
+      } catch (error) {
+        console.error('âš ï¸ Ø®Ø·Ø£ ÙÙŠ middleware ØªØªØ¨Ø¹ Ø§Ù„Ø²ÙˆØ§Ø±:', error.message);
+      }
+    });
+  }
+
+  next();
+};
+
+module.exports = trackVisitor;
